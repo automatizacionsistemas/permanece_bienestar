@@ -1,0 +1,10 @@
+# Python
+__pycache__/
+*.pyc
+
+# Sistema / editores
+.DS_Store
+.~lock.*#
+
+# Datos fuente (se descargan, ver README)
+data/mgn2025/
