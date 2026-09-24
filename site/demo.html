@@ -67,8 +67,9 @@
 
   <script>
     (function () {
-      var MAP_URL = new URL("https://rub21.github.io/colombia-schools/index.html", location.href);
       var frame = document.getElementById("colMap");
+      // Take the origin from the iframe src, so it works on any domain
+      var MAP_URL = new URL(frame.getAttribute("src"), location.href);
       var input = document.getElementById("json");
       var msg = document.getElementById("msg");
       var sample = "{}";
