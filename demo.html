@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo del mapa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+  <style>
+    :root {
+      color-scheme: light;
+      --surface: #fffdf8;
+      --surface-2: #fffaf1;
+      --ink: #1d1a16;
+      --ink-muted: #5f584e;
+      --border: rgba(29, 26, 22, 0.16);
+      --accent: #1d1a16;
+      --critical: #b30000;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: grid; grid-template-columns: 360px 1fr;
+      background: var(--surface); color: var(--ink); font: 14px/1.45 "Hanken Grotesk", "Helvetica Neue", sans-serif;
+    }
+    aside {
+      display: flex; flex-direction: column; gap: 10px; min-height: 0;
+      padding: 16px; border-right: 1px solid var(--border); background: var(--surface-2);
+    }
+    h1 { margin: 0; font: 600 22px/1.15 "Fraunces", Georgia, serif; letter-spacing: -0.01em; }
+    p { margin: 0; color: var(--ink-muted); font-size: 13px; }
+    code { font: 12px/1.4 ui-monospace, Menlo, monospace; }
+    textarea {
+      flex: 1; min-height: 160px; width: 100%; resize: none; padding: 10px;
+      font: 12px/1.6 "JetBrains Mono", ui-monospace, Menlo, monospace; color: var(--ink);
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    }
+    textarea:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .actions { display: flex; gap: 8px; }
+    button {
+      padding: 8px 16px; font: inherit; font-weight: 600; border-radius: 999px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+    }
+    button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface-2); }
+    label { font-size: 12px; font-weight: 600; color: var(--ink-muted); }
+    select {
+      width: 100%; padding: 8px 10px; font: inherit; font-size: 13px; color: var(--ink);
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+    }
+    #msg { min-height: 20px; font-size: 13px; color: var(--ink-muted); }
+    #msg.error { color: var(--critical); }
+    iframe { width: 100%; height: 100%; border: 0; }
+    @media (max-width: 760px) {
+      body { grid-template-columns: 1fr; grid-template-rows: 46vh 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <h1>Demo del mapa</h1>
+    <p>Este JSON es lo que PeopleSoft envía al mapa: <code>title</code> es el título del mapa y <code>values</code> tiene el código DANE del municipio y su cantidad. Los valores son de ejemplo. Edítalos y presiona Aplicar.</p>
+    <label for="sample">Ejemplo</label>
+    <!-- Each option loads samples/<value>.json -->
+    <select id="sample">
+        <option value="alumnos">Alumnos</option>
+        <option value="riesgo-desercion">Alumnos en riesgo de deserción</option>
+        <option value="permanencia-prolongada">Indicador de permanencia prolongada</option>
+        <option value="procesos-disciplinarios">Procesos disciplinarios</option>
+        <option value="cancelacion-semestre">Indicador de cancelación de semestre completo</option>
+        <option value="sin-materias-inscritas">Estudiante activo que no inscribió materias en el corte (pero sigue matriculado)</option>
+        <option value="alertas-academicas">Número de alertas académicas activas &gt;1</option>
+        <option value="riesgo-assist">Nivel de riesgo ASSIST por sustancia</option>
+        <option value="dass21-depresion">Puntaje escala Depresión DASS-21</option>
+        <option value="dass21-estres">Puntaje escala Estrés DASS-21</option>
+        <option value="pansi-alto-riesgo">Puntaje PANSI — ISN, Ideación Suicida Negativa (Alto riesgo)</option>
+        <option value="pansi-muy-alto-riesgo">Puntaje PANSI — ISN, Ideación Suicida Negativa (Muy alto riesgo — Alerta Crítica)</option>
+        <option value="puntaje-basico-matricula">Puntaje Básico de Matrícula (1-71) — clasificación socioeconómica institucional para liquidar derechos de matrícula</option>
+        <option value="personas-a-cargo">Indicador de personas a cargo (hijos u otros dependientes)</option>
+        <option value="trabaja-mientras-estudia">Indicador de si el estudiante trabaja mientras estudia — Horas de trabajo remunerado por semana</option>
+        <option value="red-de-apoyo">Con quién puede contar el estudiante realmente cuando necesita ayuda (D_Apoyo del protocolo)</option>
+        <option value="tiempo-libre">Actividades en las que el estudiante ocupa su tiempo libre (D_tiemp del protocolo)</option>
+        <option value="notas-parciales">Notas parciales en el semestre en curso</option>
+    </select>
+    <textarea id="json" spellcheck="false" aria-label="Datos en JSON"></textarea>
+    <div class="actions">
+      <button id="apply" class="primary">Aplicar</button>
+      <button id="reset">Restaurar ejemplo</button>
+    </div>
+    <div id="msg" role="status"></div>
+  </aside>
+  <iframe id="colMap" src="./index.html" title="Mapa de Colombia"></iframe>
+
+  <script>
+    (function () {
+      var frame = document.getElementById("colMap");
+      // Take the origin from the iframe src, so it works on any domain
+      var MAP_URL = new URL(frame.getAttribute("src"), location.href);
+      var input = document.getElementById("json");
+      var msg = document.getElementById("msg");
+      var picker = document.getElementById("sample");
+      var samples = {};
+      var current = null;
+      var mapReady = false;
+
+      function say(text, isError) {
+        msg.textContent = text;
+        msg.className = isError ? "error" : "";
+      }
+
+      function apply() {
+        var data;
+        try {
+          data = JSON.parse(input.value);
+        } catch (err) {
+          say("JSON inválido: " + err.message, true);
+          return;
+        }
+        var values = data && data.values;
+        if (!values || typeof values !== "object" || Array.isArray(values)) {
+          say('Debe ser un objeto: {"title": "Alumnos", "values": {"05001": 120, ...}}', true);
+          return;
+        }
+        var title = typeof data.title === "string" && data.title.trim() ? data.title.trim() : "Registros";
+        var bad = Object.keys(values).filter(function (k) {
+          return !/^\d{5}$/.test(k) || !isFinite(Number(values[k]));
+        });
+        frame.contentWindow.postMessage(
+          { type: "map-data", title: title, values: values },
+          MAP_URL.origin
+        );
+        var ok = Object.keys(values).length - bad.length;
+        var done = ok + (ok === 1 ? " municipio aplicado." : " municipios aplicados.");
+        say(bad.length
+          ? done + " Ignorados: " + bad.slice(0, 5).join(", ") + (bad.length > 5 ? "…" : "")
+          : done, bad.length > 0);
+      }
+
+      window.addEventListener("message", function (e) {
+        if (e.origin !== MAP_URL.origin) return;
+        if (e.data && e.data.type === "map-ready") {
+          mapReady = true;
+          if (input.value) apply();
+        }
+      });
+
+      document.getElementById("apply").addEventListener("click", apply);
+      document.getElementById("reset").addEventListener("click", function () {
+        if (current) show(current);
+      });
+
+      // Load an example from samples/<name>.json into the editor and send it
+      function show(name) {
+        current = name;
+        var load = samples[name] || fetch("./samples/" + name + ".json").then(function (r) {
+          if (!r.ok) throw new Error(r.status);
+          return r.text();
+        });
+        samples[name] = load;
+        load
+          .then(function (text) {
+            if (current !== name) return;
+            input.value = text.trim();
+            if (mapReady) apply();
+          })
+          .catch(function () {
+            delete samples[name];
+            say("No se pudo cargar samples/" + name + ".json", true);
+          });
+      }
+
+      picker.addEventListener("change", function () { show(picker.value); });
+      show(picker.value);
+    })();
+  </script>
+</body>
+</html>
