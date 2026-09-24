@@ -85,16 +85,6 @@
     }
     .tip-meta b { font-weight: 600; color: var(--ink); }
 
-    /* Social links */
-    .social { right: 12px; bottom: 46px; display: flex; gap: 2px; padding: 3px; border-radius: 999px; animation-delay: 0.12s; }
-    .social a {
-      display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px;
-      color: var(--ink-soft); transition: background 0.18s, color 0.18s;
-    }
-    .social a:hover { background: var(--ink); color: var(--paper); }
-    .social a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-    .social svg { width: 17px; height: 17px; }
-
     /* Map controls */
     .maplibregl-ctrl-group {
       background: var(--paper); border: 1px solid var(--rule); border-radius: 10px;
@@ -119,15 +109,6 @@
     <div id="legend"></div>
     <div id="status">Esperando datos…</div>
   </div>
-  <nav class="card social" aria-label="Redes sociales">
-    <a href="https://www.instagram.com/ced_coeurdepilote/" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <rect x="3" y="3" width="18" height="18" rx="5"/>
-        <circle cx="12" cy="12" r="4"/>
-        <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"/>
-      </svg>
-    </a>
-  </nav>
 
   <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
   <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
@@ -200,13 +181,6 @@
             },
           },
           {
-            id: "municipios-hover", type: "line", source: "municipios", "source-layer": "municipios",
-            paint: {
-              "line-color": "#1a1a19",
-              "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2, 0],
-            },
-          },
-          {
             id: "departamentos-line", type: "line", source: "departamentos", "source-layer": "departamentos",
             layout: { "line-join": "round" },
             paint: {
@@ -215,16 +189,26 @@
             },
           },
           {
+            id: "pais-line", type: "line", source: "pais", "source-layer": "pais",
+            layout: { "line-join": "round" },
+            paint: { "line-color": BORDER, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1.2, 10, 3] },
+          },
+          // hover lines go above every border, so a highlighted edge on a department or country border stays visible
+          {
+            id: "municipios-hover", type: "line", source: "municipios", "source-layer": "municipios",
+            layout: { "line-join": "round" },
+            paint: {
+              "line-color": "#1a1a19",
+              "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2, 0],
+            },
+          },
+          {
             id: "departamentos-hover", type: "line", source: "departamentos", "source-layer": "departamentos",
+            layout: { "line-join": "round" },
             paint: {
               "line-color": "#1a1a19",
               "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2.5, 0],
             },
-          },
-          {
-            id: "pais-line", type: "line", source: "pais", "source-layer": "pais",
-            layout: { "line-join": "round" },
-            paint: { "line-color": BORDER, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1.2, 10, 3] },
           },
           {
             id: "municipios-label", type: "symbol", source: "labels", minzoom: MPIO_LABEL_ZOOM,
